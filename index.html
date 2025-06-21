@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Table Assessment</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 40px;
+      background: linear-gradient(to right, #fdfbfb, #ebedee);
+      color: #333;
+    }
+
+    h1,
+    h2 {
+      color: #222;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-bottom: 40px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 16px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #4a90e2;
+      color: white;
+      font-weight: 600;
+    }
+
+    td {
+      background-color: #fff;
+      border-bottom: 1px solid #eee;
+    }
+
+    tr:hover td {
+      background-color: #f0f8ff;
+      transition: background-color 0.3s ease;
+    }
+
+    .table-section {
+      margin-top: 60px;
+    }
+
+    #table1 table {
+      margin-top: 10px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        margin: 20px;
+      }
+
+      table,
+      thead,
+      tbody,
+      th,
+      td,
+      tr {
+        display: block;
+      }
+
+      th {
+        text-align: left;
+      }
+
+      tr {
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+      }
+
+      td {
+        text-align: left;
+        padding: 10px 15px;
+        border: none;
+        border-bottom: 1px solid #eee;
+        position: relative;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #555;
+        position: absolute;
+        left: 15px;
+        top: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1>📄 Table 1: Loaded from Local Directory</h1>
+  <div id="table1"></div>
+
+  <div class="table-section">
+    <h2>📊 Table 2: Processed Data Summary</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody id="table2"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const csvPath = 'data/table.csv';
+
+    fetch(csvPath)
+      .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok');
+        return response.text();
+      })
+      .then(text => {
+        const rows = text.trim().split('\n').map(row => row.split(','));
+        displayTable1(rows);
+        processTable2(rows);
+      })
+      .catch(error => {
+        console.error('Error loading CSV:', error);
+        alert('Failed to load CSV file. Ensure it is located in a "data" folder and named "table.csv".');
+      });
+
+    function displayTable1(data) {
+      const table1Div = document.getElementById('table1');
+      table1Div.innerHTML = '';
+      const table = document.createElement('table');
+      const thead = document.createElement('thead');
+      const tbody = document.createElement('tbody');
+
+      data.forEach((row, i) => {
+        const tr = document.createElement('tr');
+        row.forEach(cell => {
+          const cellElement = i === 0 ? document.createElement('th') : document.createElement('td');
+          cellElement.textContent = cell;
+          tr.appendChild(cellElement);
+        });
+        if (i === 0) {
+          thead.appendChild(tr);
+        } else {
+          tbody.appendChild(tr);
+        }
+      });
+
+      table.appendChild(thead);
+      table.appendChild(tbody);
+      table1Div.appendChild(table);
+    }
+
+    function processTable2(data) {
+      try {
+        const header = data[0];
+        const trimmedHeader = header.map(h => h.trim());
+        const indexCol = trimmedHeader.indexOf('Index #');
+        const valueCol = trimmedHeader.indexOf('Value');
+
+        if (indexCol === -1 || valueCol === -1) {
+          throw new Error('Required columns not found');
+        }
+
+        const lookup = {};
+        for (let i = 1; i < data.length; i++) {
+          const key = data[i][indexCol].trim();
+          const value = parseFloat(data[i][valueCol].trim());
+          if (!isNaN(value)) {
+            lookup[key] = value;
+          }
+        }
+
+        const alpha = (lookup['A5'] || 0) + (lookup['A20'] || 0);
+        const beta = (lookup['A15'] || 0) / (lookup['A7'] || 1);
+        const charlie = (lookup['A13'] || 0) * (lookup['A12'] || 0);
+
+        const table2Body = document.getElementById('table2');
+        table2Body.innerHTML = '';
+        const categories = [
+          ['Alpha', alpha],
+          ['Beta', beta.toFixed(2)],
+          ['Charlie', charlie]
+        ];
+        categories.forEach(([cat, val]) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${cat}</td><td>${val}</td>`;
+          table2Body.appendChild(tr);
+        });
+      } catch (err) {
+        alert('Error processing CSV. Please make sure it includes "Index #" and "Value" columns.');
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+
+</html>
